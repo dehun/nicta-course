@@ -276,8 +276,11 @@ find ::
   (a -> Bool)
   -> List a
   -> Optional a
-find xs =
-  filter (\x -> x `mod` 2 == 1) xs
+find fx (x :. xs) =
+    if fx x
+    then Full x
+    else find fx xs
+find _ Nil = Empty
 
 -- | Determine if the length of the given list is greater than 4.
 --
@@ -295,8 +298,8 @@ find xs =
 lengthGT4 ::
   List a
   -> Bool
-lengthGT4 =
-  error "todo: Course.List#lengthGT4"
+lengthGT4 (_ :. _ :. _ :. _ :. _) = True
+lengthGT4 _ = False                                     
 
 -- | Reverse a list.
 --
@@ -312,8 +315,18 @@ lengthGT4 =
 reverse ::
   List a
   -> List a
-reverse =
-  error "todo: Course.List#reverse"
+reverse Nil = Nil     
+reverse xs = _reverse xs Nil
+             where
+               _reverse Nil acc = acc
+               _reverse (y :. ys) acc = _reverse ys (y :. acc)
+
+last (x :. Nil) = x
+last (h :. t)  = last t
+
+init (x :. Nil) = Nil
+init (x:. xs) = x :. init xs
+                  
 
 -- | Produce an infinite `List` that seeds with the given value at its head,
 -- then runs the given function for subsequent elements
@@ -327,8 +340,8 @@ produce ::
   (a -> a)
   -> a
   -> List a
-produce =
-  error "todo: Course.List#produce"
+produce fx z = z :. produce fx (fx z)
+               
 
 -- | Do anything other than reverse a list.
 -- Is it even possible?
@@ -342,8 +355,8 @@ produce =
 notReverse ::
   List a
   -> List a
-notReverse =
-  error "todo: Is it even possible?"
+notReverse = reverse
+
 
 ---- End of list exercises
 
