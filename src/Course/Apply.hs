@@ -48,25 +48,7 @@ instance Apply List where
     -> List a
     -> List b
   (<*>) fxs xs = flatMap (\fx -> map fx xs) fxs
-      
 
--- | Implement @Apply@ instance for @Optional@.
---
--- >>> Full (+8) <*> Full 7
--- Full 15
---
--- >>> Empty <*> Full 7
--- Empty
---
--- >>> Full (+8) <*> Empty
--- Empty
-instance Apply Optional where
-  (<*>) ::
-    Optional (a -> b)
-    -> Optional a
-    -> Optional b
-  (<*>) =
-    error "todo: Course.Apply (<*>)#instance Optional"
 
 -- | Implement @Apply@ instance for reader.
 --
@@ -89,8 +71,32 @@ instance Apply ((->) t) where
     ((->) t (a -> b))
     -> ((->) t a)
     -> ((->) t b)
-  (<*>) =
-    error "todo: Course.Apply (<*>)#instance ((->) t)"
+  (<*>) fx x = nfx
+      where nfx y = fx y (x y)
+--    error "todo: Course.Apply (<*>)#instance ((->) t)"
+--    (t -> (a -> b)) -> (t -> a) -> (t -> b)
+
+                 
+      
+
+-- | Implement @Apply@ instance for @Optional@.
+--
+-- >>> Full (+8) <*> Full 7
+-- Full 15
+--
+-- >>> Empty <*> Full 7
+-- Empty
+--
+-- >>> Full (+8) <*> Empty
+-- Empty
+instance Apply Optional where
+  (<*>) ::
+    Optional (a -> b)
+    -> Optional a
+    -> Optional b
+  (<*>) (Full fx) (Full x) = Full (fx x)
+  (<*>) _ _ = Empty
+    
 
 -- | Apply a binary function in the environment.
 --
@@ -117,8 +123,8 @@ lift2 ::
   -> f a
   -> f b
   -> f c
-lift2 =
-  error "todo: Course.Apply#lift2"
+lift2 fx lhs rhs = fx <$> lhs <*> rhs
+--  error "todo: Course.Apply#lift2"
 
 -- | Apply a ternary function in the environment.
 --
@@ -149,8 +155,8 @@ lift3 ::
   -> f b
   -> f c
   -> f d
-lift3 =
-  error "todo: Course.Apply#lift2"
+lift3 fx x y z = fx <$> x <*> y <*> z
+    
 
 -- | Apply a quaternary function in the environment.
 --
@@ -182,8 +188,7 @@ lift4 ::
   -> f c
   -> f d
   -> f e
-lift4 =
-  error "todo: Course.Apply#lift4"
+lift4 fx x y z m = fx <$> x <*> y <*> z <*> m
 
 -- | Sequence, discarding the value of the first argument.
 -- Pronounced, right apply.
@@ -208,8 +213,8 @@ lift4 =
   f a
   -> f b
   -> f b
-(*>) =
-  error "todo: Course.Apply#(*>)"
+(*>) lhs rhs = lift2 (\ x y -> y) lhs rhs
+
 
 -- | Sequence, discarding the value of the second argument.
 -- Pronounced, left apply.
@@ -234,8 +239,8 @@ lift4 =
   f b
   -> f a
   -> f b
-(<*) =
-  error "todo: Course.Apply#(<*)"
+(<*) lhs rhs = lift2 (\ x y -> x) lhs rhs
+    
 
 -----------------------
 -- SUPPORT LIBRARIES --
