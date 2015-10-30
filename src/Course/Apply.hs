@@ -35,8 +35,8 @@ instance Apply Id where
     Id (a -> b)
     -> Id a
     -> Id b
-  (<*>) =
-    error "todo: Course.Apply (<*>)#instance Id"
+  (<*>) (Id fx) (Id x)= Id (fx x)
+      
 
 -- | Implement @Apply@ instance for @List@.
 --
@@ -47,8 +47,8 @@ instance Apply List where
     List (a -> b)
     -> List a
     -> List b
-  (<*>) =
-    error "todo: Course.Apply (<*>)#instance List"
+  (<*>) fxs xs = flatMap (\fx -> map fx xs) fxs
+      
 
 -- | Implement @Apply@ instance for @Optional@.
 --
