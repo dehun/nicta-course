@@ -41,7 +41,8 @@ instance Functor f => Functor (StateT s f) where
     (a -> b)
     -> StateT s f a
     -> StateT s f b
-  (<$>) =
+  (<$>) fx (StateT runs) = StateT (\s -> let fsa = runs s in
+                                         (\(a,ns) -> (fx a, ns)) <$> fsa)
     error "todo: Course.StateT (<$>)#instance (StateT s f)"
 
 -- | Implement the `Apply` instance for @StateT s f@ given a @Bind f@.

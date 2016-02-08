@@ -213,7 +213,7 @@ lift4 fx x y z m = fx <$> x <*> y <*> z <*> m
   f a
   -> f b
   -> f b
-(*>) lhs rhs = lift2 (\ x y -> y) lhs rhs
+(*>) lhs rhs = lift2 (\ _ y -> y) lhs rhs
 
 
 -- | Sequence, discarding the value of the second argument.
@@ -239,7 +239,7 @@ lift4 fx x y z m = fx <$> x <*> y <*> z <*> m
   f b
   -> f a
   -> f b
-(<*) lhs rhs = lift2 (\ x y -> x) lhs rhs
+(<*) lhs rhs = lift2 (\ x _ -> x) lhs rhs
     
 
 -----------------------

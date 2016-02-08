@@ -1,3 +1,4 @@
+
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -321,11 +322,15 @@ reverse xs = _reverse xs Nil
                _reverse Nil acc = acc
                _reverse (y :. ys) acc = _reverse ys (y :. acc)
 
+last :: List  a -> a
 last (x :. Nil) = x
-last (h :. t)  = last t
+last (_ :. t)  = last t
+last Nil = error "last called on empty list"                 
 
-init (x :. Nil) = Nil
+init :: List a -> List a           
+init (_ :. Nil) = Nil
 init (x:. xs) = x :. init xs
+init Nil = error "init called on empty list"                
                   
 
 -- | Produce an infinite `List` that seeds with the given value at its head,

@@ -100,7 +100,7 @@ instance Functor ((->) t) where
   a
   -> f b
   -> f a
-(<$) c = (<$>) (\x -> c)
+(<$) c = (<$>) (\_ -> c)
 
 
 -- | Anonymous map producing unit value.

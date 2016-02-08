@@ -29,8 +29,7 @@ import qualified Data.Set as S
 newtype State s a =
   State {
     runState ::
-      s
-      -> (a, s)
+      s -> (a, s)
   }
 
 -- | Implement the `Functor` instance for `State s`.
@@ -41,8 +40,10 @@ instance Functor (State s) where
     (a -> b)
     -> State s a
     -> State s b
-  (<$>) =
-      error "todo: Course.State#(<$>)"
+  (<$>) fx (State oldrun) = State (\s -> let (oldval, olds) = oldrun s
+                                         in (fx oldval, olds))
+                       
+                       
 
 -- | Implement the `Apply` instance for `State s`.
 -- >>> runState (pure (+1) <*> pure 0) 0
@@ -56,8 +57,10 @@ instance Apply (State s) where
     State s (a -> b)
     -> State s a
     -> State s b 
-  (<*>) =
-    error "todo: Course.State (<*>)#instance (State s)"
+  (<*>) (State oldrunfx) (State oldruna) = State (\s -> let (fx, sfx) = oldrunfx s
+                                                            (a, sa) = oldruna sfx
+                                                        in (fx a, sa))
+
 
 -- | Implement the `Applicative` instance for `State s`.
 -- >>> runState (pure 2) 0
@@ -66,8 +69,8 @@ instance Applicative (State s) where
   pure ::
     a
     -> State s a
-  pure =
-    error "todo: Course.State pure#instance (State s)"
+  pure x = State (\s -> (x, s))
+    
 
 -- | Implement the `Bind` instance for `State s`.
 -- >>> runState ((const $ put 2) =<< put 1) 0
@@ -77,9 +80,11 @@ instance Bind (State s) where
     (a -> State s b)
     -> State s a
     -> State s b
-  (=<<) =
-    error "todo: Course.State (=<<)#instance (State s)"
-
+  (=<<) fx (State runa) = State (\os -> let (a, as) = runa os
+                                            (State runb) = fx a
+                                            (b, bs) = runb as
+                                        in (b, bs))
+       
 instance Monad (State s) where
 
 -- | Run the `State` seeded with `s` and retrieve the resulting state.
@@ -89,8 +94,9 @@ exec ::
   State s a
   -> s
   -> s
-exec =
-  error "todo: Course.State#exec"
+exec (State runs) s = let (na, ns) = runs s
+                      in ns
+    
 
 -- | Run the `State` seeded with `s` and retrieve the resulting value.
 --
@@ -99,8 +105,9 @@ eval ::
   State s a
   -> s
   -> a
-eval =
-  error "todo: Course.State#eval"
+eval (State runs) s = let (na, ns) = runs s
+                      in na
+
 
 -- | A `State` where the state also distributes into the produced value.
 --
@@ -108,8 +115,8 @@ eval =
 -- (0,0)
 get ::
   State s s
-get =
-  error "todo: Course.State#get"
+get = State (\s -> (s, s))
+    
 
 -- | A `State` where the resulting state is seeded with the given value.
 --
@@ -118,8 +125,8 @@ get =
 put ::
   s
   -> State s ()
-put =
-  error "todo: Course.State#put"
+put os = State (\_ -> ((), os))
+
 
 -- | Find the first element in a `List` that satisfies a given predicate.
 -- It is possible that no element is found, hence an `Optional` result.
@@ -140,8 +147,13 @@ findM ::
   (a -> f Bool)
   -> List a
   -> f (Optional a)
-findM =
-  error "todo: Course.State#findM"
+findM _ Nil = return Empty     
+findM predicate (x:.xs) =
+    (\p -> if p
+           then pure $ Full x
+           else findM predicate xs) =<< predicate x
+
+
 
 -- | Find the first element in a `List` that repeats.
 -- It is possible that no element repeats, hence an `Optional` result.
@@ -150,12 +162,21 @@ findM =
 --
 -- prop> case firstRepeat xs of Empty -> let xs' = hlist xs in nub xs' == xs'; Full x -> length (filter (== x) xs) > 1
 -- prop> case firstRepeat xs of Empty -> True; Full x -> let (l, (rx :. rs)) = span (/= x) xs in let (l2, r2) = span (/= x) rs in let l3 = hlist (l ++ (rx :. Nil) ++ l2) in nub l3 == l3
+
 firstRepeat ::
   Ord a =>
   List a
   -> Optional a
-firstRepeat =
-  error "todo: Course.State#firstRepeat"
+firstRepeat xs =
+    result
+    where
+      (result, _) = runState (findM predicate xs) S.empty
+      predicate x = do
+        alreadyThere <- get
+        let alreadyThereWithNew = S.insert x alreadyThere
+        put alreadyThereWithNew
+        return $  S.member x alreadyThere
+    
 
 -- | Remove all duplicate elements in a `List`.
 -- /Tip:/ Use `filtering` and `State` with a @Data.Set#Set@.
