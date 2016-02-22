@@ -140,7 +140,7 @@ put os = State (\_ -> ((), os))
 -- >>> let p x = (\s -> (const $ pure (x == 'c')) =<< put (1+s)) =<< get in runState (findM p $ listh ['a'..'h']) 0
 -- (Full 'c',3)
 --
--- >>> let p x = (\s -> (const $ pure (x == 'i')) =<< put (1+s)) =<< get in runState (findM p $ listh ['a'..'h']) 8
+-- >>> let p x = (\s -> (const $ pure (x == 'i')) =<< put (1+s)) =<< get in runState (findM p $ listh ['a'..'h']) 0
 -- (Empty,8)
 findM ::
   Monad f =>
@@ -176,7 +176,6 @@ firstRepeat xs =
         let alreadyThereWithNew = S.insert x alreadyThere
         put alreadyThereWithNew
         return $  S.member x alreadyThere
-    
 
 -- | Remove all duplicate elements in a `List`.
 -- /Tip:/ Use `filtering` and `State` with a @Data.Set#Set@.
@@ -188,8 +187,29 @@ distinct ::
   Ord a =>
   List a
   -> List a
-distinct =
-  error "todo: Course.State#distinct"
+distinct xs = result
+              where
+                (result, _) = runState (filtering dups_pred xs) (S.empty, xs)
+                dups_pred x = do
+                  (dups, ys) <- get
+                  put (dups, ltail ys)
+                  (_, rest) <- get
+                  if S.member x dups
+                  then do
+                    return False
+                  else do
+                    s <- findM (\y -> return $ x == y) rest
+                    case s of
+                      (Full _) -> do
+                                put (S.insert x dups, rest)
+                                return False
+                      Empty -> do
+                                return True
+                ltail (z:.zs) = zs
+                                       
+                      
+                                        
+  
 
 -- | A happy number is a positive integer, where the sum of the square of its digits eventually reaches 1 after repetition.
 -- In contrast, a sad number (not a happy number) is where the sum of the square of its digits never reaches 1
